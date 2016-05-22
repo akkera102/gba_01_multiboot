@@ -9,7 +9,7 @@ The GBA file that you wish to load into the GBA is stored on the raspberry pi lo
 
 
 ## Wiring
-GBA connector
+GBA connector(cable side). i recommend, you check tester. probably color is different.
 
   T
 1 3 5         1 3v, xxx 3 SI, wht 5 SC, red
