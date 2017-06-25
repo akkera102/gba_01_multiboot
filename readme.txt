@@ -50,3 +50,15 @@ MulitBoot done
 Ken Kaarvik    kkaarvik@yahoo.com    Nov 13, 2010
 akkera102                            Nov 08, 2014(mbed version)
 akkera102                            May 20, 2016(raspberry pi version)
+
+
+
+
+
+
+## 2017/06/26
+## added. backup savedata tool
+
+1. at one's own risk.
+2. Tool can't action keyboard. you use gameboy button.(L+A+B or R+A+B)
+3. Please press the button at the same time. It often happens that timing does not match.
