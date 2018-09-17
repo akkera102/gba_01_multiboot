@@ -54,8 +54,6 @@ akkera102                            May 20, 2016(raspberry pi version)
 
 
 
-
-
 ## 2017/06/26
 ## added. savedata backup tool
 
@@ -65,3 +63,8 @@ akkera102                            May 20, 2016(raspberry pi version)
 
 Reference link. simple source code. Thank you!
 https://www.chishm.com/SendSave/index.html
+
+
+## 2018/09/17
+## Rewrite version
+https://github.com/akkera102/gba_03_multiboot
