@@ -223,6 +223,7 @@ int main(void)
 void CmdPrint(uint32_t cnt)
 {
 	uint32_t i, r;
+	char c;
 
 	for(i=0; i<cnt; i++)
 	{
@@ -232,7 +233,13 @@ void CmdPrint(uint32_t cnt)
 			nanosleep(&ts2, NULL);
 		}
 
-		printf("%c", (char)r);
+		c = r & 0xff;
+
+		if((c >= 0x20 && c <= 0x7E) || c == 0x0D || c == 0x0A)
+		{
+			printf("%c", c);
+		}
+
 		r >>= 8;
 	}
 }
