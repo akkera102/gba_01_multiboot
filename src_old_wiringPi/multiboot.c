@@ -1,34 +1,26 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <unistd.h>
-#include <time.h>
-#include <pigpio.h>
-
-// gcc -Wall -o multiboot multiboot.c -lpigpio
-
-int spi;
-struct timespec ts = {0, 10 * 1000000};		// wait 10ms
+#include <wiringPi.h>
 
 uint32_t WriteSPI32NoDebug(uint32_t w)
 {
-	char send[4];
-	char recv[4];
+	uint8_t buf[4];
 
-	send[3] = (w & 0x000000ff);
-	send[2] = (w & 0x0000ff00) >>  8;
-	send[1] = (w & 0x00ff0000) >> 16;
-	send[0] = (w & 0xff000000) >> 24;
+	buf[3] = (w & 0x000000ff);
+	buf[2] = (w & 0x0000ff00) >>  8;
+	buf[1] = (w & 0x00ff0000) >> 16;
+	buf[0] = (w & 0xff000000) >> 24;
 
-	spiXfer(spi, send, recv, 4);
+	wiringPiSPIDataRW(0, &buf, 4);
 
-	uint32_t ret = 0;
+	uint32_t r = 0;
 
-	ret += ((unsigned char)recv[0]) << 24;
-	ret += ((unsigned char)recv[1]) << 16;
-	ret += ((unsigned char)recv[2]) <<  8;
-	ret += ((unsigned char)recv[3]);
+	r += buf[0] << 24;
+	r += buf[1] << 16;
+	r += buf[2] <<  8;
+	r += buf[3];
 
-	return ret;
+	return r;
 }
 
 uint32_t WriteSPI32(uint32_t w, char* msg)
@@ -47,18 +39,18 @@ void WaitSPI32(uint32_t w, uint32_t comp, char* msg)
 	do
 	{
 		r = WriteSPI32NoDebug(w);
-		nanosleep(&ts, NULL);
+		usleep(10000);
 
 	} while(r != comp);
 }
 
-int main(void)
+void main(void)
 {
 	FILE *fp = fopen("multiboot_mb.gba", "rb");
 	if(fp == NULL)
 	{
 		printf("Err: Can't open file\n");
-		return 1;
+		return;
 	}
 
 	fseek(fp, 0L, SEEK_END);
@@ -67,7 +59,7 @@ int main(void)
 	if(fsize > 0x40000)
 	{
 		printf("Err: Max file size 256kB\n");
-		return 2;
+		return;
 	}
 
 	fseek(fp, 0L, SEEK_SET);
@@ -76,17 +68,7 @@ int main(void)
 	uint32_t r, w, w2;
 	uint32_t i, bit;
 
-	if(gpioInitialise() < 0)
-	{
-		return 3;
-	}
-
-	spi = spiOpen(0, 100000, 3);
-
-	if(spi < 0)
-	{
-		return 4;
-	}
+	wiringPiSPISetupMode(0, 100000, 3);
 
 	WaitSPI32(0x00006202, 0x72026202, "Looking for GBA");
 
@@ -172,8 +154,4 @@ int main(void)
 
 	printf("CRC ...hope they match!\n");
 	printf("MulitBoot done\n");
-
-	spiClose(spi);
-
-	return 0;
 }

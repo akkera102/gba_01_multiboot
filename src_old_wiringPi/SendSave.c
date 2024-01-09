@@ -1,15 +1,13 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <wiringPi.h>
 #include <string.h>
-#include <time.h>
-#include <pigpio.h>
-
-// gcc -Wall -o SendSave SendSave.c -lpigpio
 
 //---------------------------------------------------------------------------
 uint32_t Spi32(uint32_t w);
 uint32_t Spi32Print(uint32_t w, char* msg);
 void     Spi32WaitPrint(uint32_t w, uint32_t comp, char* msg);
+uint32_t Swap32(uint32_t d);
 
 void     CmdPrint(uint32_t cnt);
 void     CmdPut(uint32_t chr);
@@ -21,21 +19,18 @@ void     CmdFread(void);
 void     CmdFtell(void);
 
 //---------------------------------------------------------------------------
-int spi;
-struct timespec ts1 = {0, 10 * 1000000};		// wait 10ms
-struct timespec ts2 = {0,  2 * 1000000};		// wait  2ms
-
 FILE* fpSave;
 
+
 //---------------------------------------------------------------------------
-int main(void)
+void main(void)
 {
 	FILE *fp = fopen("SendSave_mb.gba", "rb");
 
 	if(fp == NULL)
 	{
 		printf("Err: Can't open file\n");
-		return 1;
+		return;
 	}
 
 	fseek(fp, 0L, SEEK_END);
@@ -44,7 +39,7 @@ int main(void)
 	if(fsize > 0x40000)
 	{
 		printf("Err: Max file size 256kB\n");
-		return 2;
+		return;
 	}
 
 	fseek(fp, 0L, SEEK_SET);
@@ -53,17 +48,7 @@ int main(void)
 	uint32_t r, w, w2;
 	uint32_t i, bit;
 
-	if(gpioInitialise() < 0)
-	{
-		return 3;
-	}
-
-	spi = spiOpen(0, 100000, 3);
-
-	if(spi < 0)
-	{
-		return 4;
-	}
+	wiringPiSPISetupMode(0, 100000, 3);
 
 	Spi32WaitPrint(0x00006202, 0x72026202, "Looking for GBA");
 
@@ -154,7 +139,7 @@ int main(void)
 	// init
 	do
 	{
-		nanosleep(&ts1, NULL);
+		usleep(10000);
 		r = Spi32(0);
 
 	} while(r != 0x50525406);
@@ -215,7 +200,7 @@ int main(void)
 			break;
 		}
 
-		nanosleep(&ts1, NULL);
+		usleep(10000);
 		r = Spi32(0);
 	}
 }
@@ -229,10 +214,10 @@ void CmdPrint(uint32_t cnt)
 		if(i % 4 == 0)
 		{
 			r = Spi32(0);
-			nanosleep(&ts2, NULL);
+			usleep(2000);
 		}
 
-		printf("%c", (char)r);
+		printf("%c", r, r & 0xff);
 		r >>= 8;
 	}
 }
@@ -240,7 +225,7 @@ void CmdPrint(uint32_t cnt)
 void CmdPut(uint32_t chr)
 {
 	printf("%c", chr);
-	nanosleep(&ts1, NULL);
+	usleep(2000);
 }
 //---------------------------------------------------------------------------
 void CmdFopen(uint32_t len)
@@ -297,7 +282,7 @@ void CmdFwrite(void)
 		if(i % 4 == 0)
 		{
 			r = Spi32(0);
-			nanosleep(&ts2, NULL);
+			usleep(2000);
 		}
 
 		fputc(r & 0xff, fpSave);
@@ -339,7 +324,7 @@ void CmdFread(void)
 		r += d1;
 
 		Spi32(r);
-		nanosleep(&ts2, NULL);
+		usleep(2000);
 	}
 
 //	printf("fread %d %d\n", size, count);
@@ -355,24 +340,10 @@ void CmdFtell(void)
 //---------------------------------------------------------------------------
 uint32_t Spi32(uint32_t w)
 {
-	char send[4];
-	char recv[4];
+	w = Swap32(w);
+	wiringPiSPIDataRW(0, &w, 4);
 
-	send[3] = (w & 0x000000ff);
-	send[2] = (w & 0x0000ff00) >>  8;
-	send[1] = (w & 0x00ff0000) >> 16;
-	send[0] = (w & 0xff000000) >> 24;
-
-	spiXfer(spi, send, recv, 4);
-
-	uint32_t ret = 0;
-
-	ret += ((unsigned char)recv[0]) << 24;
-	ret += ((unsigned char)recv[1]) << 16;
-	ret += ((unsigned char)recv[2]) <<  8;
-	ret += ((unsigned char)recv[3]);
-
-	return ret;
+	return Swap32(w);
 }
 //---------------------------------------------------------------------------
 uint32_t Spi32Print(uint32_t w, char* msg)
@@ -394,4 +365,9 @@ void Spi32WaitPrint(uint32_t w, uint32_t comp, char* msg)
 
 
 	} while(r != comp);
+}
+//---------------------------------------------------------------------------
+uint32_t Swap32(uint32_t d)
+{
+	return ((d >> 24) & 0xff) | ((d << 8) & 0xff0000) | ((d >> 8) & 0xff00) | ((d << 24) & 0xff000000);
 }

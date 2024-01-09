@@ -1,28 +1,49 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <wiringPi.h>
+#include <time.h>
+#include <pigpio.h>
 
-void main(void)
+// gcc -Wall -o find_test find_test.c -lpigpio
+
+int spi;
+struct timespec ts = {0, 10 * 1000000};		// wait 10ms
+
+
+int main(void)
 {
 	printf("Looking for GBA\n");
 
-	wiringPiSPISetupMode(0, 100000, 3);
-	uint8_t buf[4];
+	if(gpioInitialise() < 0)
+	{
+		return 1;
+	}
+
+	spi = spiOpen(0, 100000, 3);
+
+	if(spi < 0)
+	{
+		return 2;
+	}
+
+	char send[4];
+	char recv[4];
 
 	do
 	{
-		buf[0] = 0x00;
-		buf[1] = 0x00;
-		buf[2] = 0x62;
-		buf[3] = 0x02;
+		send[0] = 0x00;
+		send[1] = 0x00;
+		send[2] = 0x62;
+		send[3] = 0x02;
 
-		wiringPiSPIDataRW(0, &buf, 4);			// 4 Byte(32 bit)
+		spiXfer(spi, send, recv, 4);
 
-		printf("r:0x%02x%02x%02x%02x\n", buf[0], buf[1], buf[2], buf[3]);
+		printf("r:0x%02x%02x%02x%02x\n", recv[0], recv[1], recv[2], recv[3]);
 
-		usleep(10000);		// high number is bad. 1000000 is failure.
+		nanosleep(&ts, NULL);
 
-	} while(buf[0] != 0x72 || buf[1] != 0x02 || buf[2] != 0x62 || buf[3] != 0x02);
+	} while(recv[0] != 0x72 || recv[1] != 0x02 || recv[2] != 0x62 || recv[3] != 0x02);
 
 	printf("Found GBA!\n");
+
+	return 0;
 }

@@ -24,8 +24,8 @@ GBA   --- raspberry pi b+
 
 
 ## command log
-$ gcc multiboot.c -lwiringPi -o multiboot
-$ ./multiboot
+$ gcc -Wall -o multiboot multiboot.c -lpigpio
+$ sudo ./multiboot
 
 Looking for GBA 0x72026202
 0x72026202 0x00006202  ; Found GBA
@@ -68,3 +68,7 @@ https://www.chishm.com/SendSave/index.html
 ## 2018/09/17
 ## Rewrite version
 https://github.com/akkera102/gba_03_multiboot
+
+
+## 2024/01/09
+## Changed to pigpio library because WiringPi library is no longer supported.
