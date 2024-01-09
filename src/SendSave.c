@@ -58,7 +58,7 @@ int main(void)
 		return 3;
 	}
 
-	spi = spiOpen(0, 100000, 3);
+	spi = spiOpen(0, 50000, 3);
 
 	if(spi < 0)
 	{
@@ -238,6 +238,7 @@ void CmdPrint(uint32_t cnt)
 		if((c >= 0x20 && c <= 0x7E) || c == 0x0D || c == 0x0A)
 		{
 			printf("%c", c);
+			nanosleep(&ts1, NULL);
 		}
 
 		r >>= 8;

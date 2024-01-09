@@ -18,7 +18,7 @@ int main(void)
 		return 1;
 	}
 
-	spi = spiOpen(0, 100000, 3);
+	spi = spiOpen(0, 50000, 3);
 
 	if(spi < 0)
 	{
