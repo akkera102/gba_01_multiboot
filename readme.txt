@@ -45,6 +45,11 @@ CRC ...hope they match!
 MulitBoot done
 
 
+## command log(old)
+$ gcc -o multiboot multiboot.c -lwiringPi
+$ sudo ./multiboot
+
+
 ## Author
 
 Ken Kaarvik    kkaarvik@yahoo.com    Nov 13, 2010
